@@ -5928,10 +5928,17 @@ class IdealGasDeparturePhase(Phase):
             pass
         H = self.H_dep()
         if self.vectorized:
-            H += float(dot(self.zs, self.Cpig_integrals_pure()))
+            if self.DHFORM != None:
+                H += float(dot(self.zs, self.Cpig_integrals_pure() + self.DHFORM))
+            else:
+                H += float(dot(self.zs, self.Cpig_integrals_pure()))
         else:
-            for zi, Cp_int in zip(self.zs, self.Cpig_integrals_pure()):
-                H += zi*Cp_int
+            if self.DHFORM != None:
+                for zi, Cp_int, DH in zip(self.zs, self.Cpig_integrals_pure(), self.DHFORM):
+                    H += zi * (Cp_int + DH)
+            else:
+                for zi, Cp_int in zip(self.zs, self.Cpig_integrals_pure()):
+                    H += zi * Cp_int
 
         self._H = H
         return H

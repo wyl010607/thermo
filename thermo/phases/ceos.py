@@ -133,10 +133,10 @@ class CEOSPhase(IdealGasDeparturePhase):
         return base
 
     def __init__(self, eos_class, eos_kwargs, HeatCapacityGases=None, Hfs=None,
-                 Gfs=None, Sfs=None, T=IdealGasDeparturePhase.T_DEFAULT, P=IdealGasDeparturePhase.P_DEFAULT, zs=None):
+                 Gfs=None, Sfs=None, T=IdealGasDeparturePhase.T_DEFAULT, P=IdealGasDeparturePhase.P_DEFAULT, zs=None, DHFORM=None):
         self.eos_class = eos_class
         self.eos_kwargs = eos_kwargs
-        self.vectorized = vectorized = (
+        self.vectorized = vectorized = ( #todo 判定是否需要向量化
             any(type(v) is ndarray for v in eos_kwargs.values())
             or any(type(v) is ndarray for v in (zs, Hfs, Gfs, Sfs))
         )
@@ -160,6 +160,7 @@ class CEOSPhase(IdealGasDeparturePhase):
         self.T = T
         self.P = P
         self.zs = zs
+        self.DHFORM = DHFORM
         self.eos_mix = self.eos_class(T=T, P=P, zs=zs, **self.eos_kwargs)
 
     def to_TP_zs(self, T, P, zs, other_eos=None):
@@ -231,6 +232,7 @@ class CEOSPhase(IdealGasDeparturePhase):
         new.T = T
         new.P = P
         new.zs = zs
+        new.DHFORM = self.DHFORM
         if new.composition_independent:
             new.force_phase = 'g'
 
@@ -276,6 +278,7 @@ class CEOSPhase(IdealGasDeparturePhase):
         new.T = T
         new.P = P
         new.zs = zs
+        new.DHFORM = self.DHFORM
         if new.composition_independent:
             new.force_phase = 'g'
         try:
