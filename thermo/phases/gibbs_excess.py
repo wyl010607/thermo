@@ -319,6 +319,7 @@ class GibbsExcessLiquid(Phase):
                  Psat_extrpolation='AB',
                  equilibrium_basis=None,
                  caloric_basis=None,
+                 DHFORM = None,
                  ):
         '''It is quite possible to introduce a PVT relation ship for liquid
         density and remain thermodynamically consistent. However, must be
@@ -561,6 +562,7 @@ class GibbsExcessLiquid(Phase):
             self.T = T
             self.P = P
             self.zs = zs
+        self.DHFORM = DHFORM
 
     def to_TP_zs(self, T, P, zs):
         T_equal = hasattr(self, 'T') and T == self.T
@@ -2319,11 +2321,14 @@ class GibbsExcessLiquid(Phase):
             Cpig_integrals_pure = self._Cpig_integrals_pure
         except AttributeError:
             Cpig_integrals_pure = self.Cpig_integrals_pure()
-
+        if self.DHFORM is None:
+            DHFORM = [0.0]*self.N
+        else:
+            DHFORM = self.DHFORM
         if self.use_Hvap_caloric:
             Hvaps = self.Hvaps()
             for i in range(self.N):
-                H += zs[i]*(Cpig_integrals_pure[i] - Hvaps[i])
+                H += zs[i]*(Cpig_integrals_pure[i] - Hvaps[i] + DHFORM[i])
         else:
             dPsats_dT_over_Psats = self.dPsats_dT_over_Psats()
             use_Poynting, use_phis_sat = self.use_Poynting, self.use_phis_sat
@@ -2350,16 +2355,16 @@ class GibbsExcessLiquid(Phase):
             if use_Poynting and use_phis_sat:
                 for i in cmps:
                     H += zs[i]*(nRT2*(dphis_sat_dT[i]/phis_sat[i] + dPsats_dT_over_Psats[i] + dPoyntings_dT[i]/Poyntings[i])
-                                + Cpig_integrals_pure[i])
+                                + Cpig_integrals_pure[i] + DHFORM[i])
             elif use_Poynting:
                 for i in cmps:
-                    H += zs[i]*(nRT2*(dPsats_dT_over_Psats[i] + dPoyntings_dT[i]/Poyntings[i]) + Cpig_integrals_pure[i])
+                    H += zs[i]*(nRT2*(dPsats_dT_over_Psats[i] + dPoyntings_dT[i]/Poyntings[i]) + Cpig_integrals_pure[i] + DHFORM[i])
             elif use_phis_sat:
                 for i in cmps:
-                    H += zs[i]*(nRT2*(dPsats_dT_over_Psats[i] + dphis_sat_dT[i]/phis_sat[i]) + Cpig_integrals_pure[i])
+                    H += zs[i]*(nRT2*(dPsats_dT_over_Psats[i] + dphis_sat_dT[i]/phis_sat[i]) + Cpig_integrals_pure[i] + DHFORM[i])
             else:
                 for i in cmps:
-                    H += zs[i]*(nRT2*dPsats_dT_over_Psats[i] + Cpig_integrals_pure[i])
+                    H += zs[i]*(nRT2*dPsats_dT_over_Psats[i] + Cpig_integrals_pure[i] + DHFORM[i])
 
         if not self.composition_independent:
             H += self.GibbsExcessModel.HE()

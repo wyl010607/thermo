@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
-
+import numpy as np
 from chemicals.exceptions import TrivialSolutionError
 from fluids.numerics import UnconvergedError, isinf, secant, trunc_log
 
@@ -573,8 +573,15 @@ class FlashVL(Flash):
                                                         maxiter=self.PT_STABILITY_MAXITER, xtol=self.PT_STABILITY_XTOL,
                                                         functional=functional)
                     sum_zs_test, Ks, zs_test, V_over_F, trial_zs, appearing_zs, dG_RT = sln
-                    if zs == trial_zs:
-                        continue
+                    # if zs and trial_zs list
+                    if isinstance(zs, (list, tuple)) and isinstance(trial_zs, (list, tuple)):
+                        if zs == trial_zs:
+                            continue
+                    # if zs and trial_zs np.array
+                    else:
+                        if np.all(zs == trial_zs):
+                            continue
+
                     lnK_2_tot = 0.0
                     for k in range(self.N):
                         lnK = trunc_log(Ks[k])
