@@ -20,9 +20,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 '''
+import numpy as np
 __all__ = ['GibbsExcessLiquid', 'GibbsExcessSolid']
 
 from math import isinf, isnan
+from numpy import ndarray
 
 from chemicals.solubility import Henry_constants, d2Henry_constants_dT2, dHenry_constants_dT
 from chemicals.utils import phase_identification_parameter
@@ -342,11 +344,12 @@ class GibbsExcessLiquid(Phase):
         '''
         self.N = N = len(VaporPressures)
         if zs is None:
-            zs = [1.0/N]*N
+            zs = np.array([1.0/N]*N)
         if henry_components is None:
             henry_components = [False]*self.N
         self.has_henry_components = any(henry_components)
         self.henry_components = henry_components
+        self.DHFORM = DHFORM
 
         self.VaporPressures = VaporPressures
         self.Psats_poly_fit = (all(i.method == POLY_FIT for i in VaporPressures) and not self.has_henry_components) if VaporPressures is not None else False
@@ -369,7 +372,7 @@ class GibbsExcessLiquid(Phase):
             # Other option: raise?
             self._Psats_data = Psats_data
 
-
+        self.vectorized = type(zs) is ndarray
         if self.vectorized:
             zero_coeffs = zeros((N, N))
         else:
@@ -562,7 +565,6 @@ class GibbsExcessLiquid(Phase):
             self.T = T
             self.P = P
             self.zs = zs
-        self.DHFORM = DHFORM
 
     def to_TP_zs(self, T, P, zs):
         T_equal = hasattr(self, 'T') and T == self.T
@@ -613,6 +615,8 @@ class GibbsExcessLiquid(Phase):
         new.HeatCapacityGases = self.HeatCapacityGases
         new.EnthalpyVaporizations = self.EnthalpyVaporizations
         new.HeatCapacityLiquids = self.HeatCapacityLiquids
+
+        new.DHFORM = self.DHFORM
 
 
         new.Psats_poly_fit = self.Psats_poly_fit
